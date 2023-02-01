@@ -27,12 +27,58 @@ function showEmployees (employeesArr) {
 }
 
 // Create function with a query to select all departments
+async function queryDepartments (cb) {
+    console.log("\n");
+    db.promise().query("SELECT * FROM departments;")
+        .then(([rows, fields]) => {
+            cb(rows);
+        })
+        .catch((err) => console.log(err));
+}
 
 // Create function with a query to select all roles
+async function queryRoles (cb) {
+    console.log("\n");
+    db.promise().query("SELECT roles.id, roles.title, departments.name, roles.salary FROM roles LEFT JOIN departments ON roles.department_id = departments.id;")
+        .then(([rows, fields]) => {
+            cb(rows);
+        })
+        .catch((err) => console.log(err));
+}
 
 // Create function with a query to select all employees
+async function queryEmployees (cb) {
+    console.log("\n");
+    db.promise().query("SELECT * FROM employees;")
+        .then(([rows, fields]) => {
+            cb(rows);
+        })
+        .catch((err) => console.log(err));
+}
+
+// Create a function with a query to insert a department using a prepared statement
+async function addDepartment (dept) {
+    
+}
+
+// Create a function with a query to insert a role using a prepared statement
+
+// Create a function with a query to insert an employee using a prepared statement
 
 // Create function with a query to update an employee's role
+async function updateRole(empID, roleID) {
+    db.promise().query(`UPDATE employees SET role_id = ${roleID} WHERE id = ${empID}`)
+        .then(([rows, fields]) => {
+            db.promise().query(`SELECT * FROM employees WHERE id = ${empID}`)
+                .then(([rows, fields]) => {
+                    console.log("Role successfully updated.\n");
+                    console.table(rows);
+                })
+                .catch((err) => console.log(err));
+        })
+        .catch((err) => console.log(err));
+}
+
 
 // Create array with an initial question object to select desired action
 
