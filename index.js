@@ -12,10 +12,19 @@ const db = mysql.createConnection({
 });
 
 // Create cTable function to display all departments
+function showDepartments (departmentsArr) {
+    console.table("DEPARTMENTS", departmentsArr);
+}
 
 // Create cTable function to display all roles
+function showRoles (rolesArr) {
+    console.table("ROLES", rolesArr);
+}
 
 // Create cTable function to display all employees
+function showEmployees (employeesArr) {
+    console.table("EMPLOYEES", employeesArr);
+}
 
 // Create function with a query to select all departments
 
