@@ -49,16 +49,16 @@ async function queryRoles (cb) {
 // Create function with a query to select all employees
 async function queryEmployees (cb) {
     console.log("\n");
-    db.promise().query("SELECT * FROM employees;")
+    db.promise().query("SELECT employees.id AS ID, employees.first_name AS FirstName, employees.last_name AS LastName, roles.title AS Role, departments.name AS Department, roles.salary AS Salary, B.first_name AS ManagerFirst, B.last_name AS ManagerLast FROM employees JOIN employees AS B ON employees.manager_id = B.id LEFT JOIN roles ON employees.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id;")
         .then(([rows, fields]) => {
             cb(rows);
         })
         .catch((err) => console.log(err));
 }
-
+queryEmployees(showEmployees);
 // Create a function with a query to insert a department using a prepared statement
 async function addDepartment (dept) {
-    
+
 }
 
 // Create a function with a query to insert a role using a prepared statement
