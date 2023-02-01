@@ -4,6 +4,12 @@ const mysql = require("mysql2");
 const cTable = require("console.table");
 
 // Create connection to database with mysql2
+const db = mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "password",
+    database: "hris_db"
+});
 
 // Create cTable function to display all departments
 
@@ -29,4 +35,14 @@ const cTable = require("console.table");
 
 // Create array with questions for employee and new role to update an employee's role
 
-// Create inquirer 
+// Create function with inquirer prompt to update an employee's role
+
+// Create function with inquirer prompt to add an employee
+
+// Create function with inquirer prompt to add a role
+
+// Create function with inquirer prompt to add a department
+
+// Create function with main menu inquirer prompt
+
+// Call main menu function
