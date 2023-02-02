@@ -200,7 +200,7 @@ const newEmployeeQuestions = [{
     type: "list",
     name: "manager_id",
     message: "Please select this employee's manager.",
-    when: (answers) => {return answers.role_id !== "President and Chief Executive Officer"},
+    when: (answers) => { return answers.role_id !== "President and Chief Executive Officer" },
     choices: employeeFullNames,
     pageSize: 10
 }];
@@ -298,10 +298,10 @@ function promptUpdateEmpRole() {
                                                     roleIDLookup(manager[2])
                                                         .then((mgrRoleID) => {
                                                             employeeIDLookup(manager[0], manager[1], mgrRoleID)
-                                                            .then((managerID) => {
-                                                                updateRole(empID, roleID, managerID);
-                                                            })
-                                                            .catch(err => console.log(err));
+                                                                .then((managerID) => {
+                                                                    updateRole(empID, roleID, managerID);
+                                                                })
+                                                                .catch(err => console.log(err));
                                                         })
                                                         .catch((err) => console.log(err));
                                                 })
@@ -325,7 +325,7 @@ function promptUpdateEmpRole() {
 }
 
 // Create function with inquirer prompt to add an employee
-function promptAddEmployee () {
+function promptAddEmployee() {
     db.promise().query("SELECT CONCAT(employees.first_name, ' ', employees.last_name, ', ', roles.title) AS full_name FROM employees JOIN roles ON employees.role_id = roles.id;")
         .then(([rows, fields]) => {
             rows.forEach((row) => employeeFullNames.push(row.full_name));
@@ -335,25 +335,25 @@ function promptAddEmployee () {
                     inquirer.prompt(newEmployeeQuestions)
                         .then((answers) => {
                             roleIDLookup(answers.role_id)
-                            .then((roleID) => {
-                                const manager = parseEmployee(answers.manager_id);
-                                roleIDLookup(manager[2])
-                                .then((mgrRole) => {
-                                    employeeIDLookup(manager[0], manager[1], mgrRole)
-                                    .then((mgrId) => {
-                                        const newEmployee = {
-                                            first_name: answers.first_name,
-                                            last_name: answers.last_name,
-                                            role_id: roleID,
-                                            manager_id: mgrId
-                                        };
-                                        addEmployee(newEmployee);
-                                    })
-                                    .catch(err => console.log(err));
+                                .then((roleID) => {
+                                    const manager = parseEmployee(answers.manager_id);
+                                    roleIDLookup(manager[2])
+                                        .then((mgrRole) => {
+                                            employeeIDLookup(manager[0], manager[1], mgrRole)
+                                                .then((mgrId) => {
+                                                    const newEmployee = {
+                                                        first_name: answers.first_name,
+                                                        last_name: answers.last_name,
+                                                        role_id: roleID,
+                                                        manager_id: mgrId
+                                                    };
+                                                    addEmployee(newEmployee);
+                                                })
+                                                .catch(err => console.log(err));
+                                        })
+                                        .catch(err => console.log(err));
                                 })
                                 .catch(err => console.log(err));
-                            })
-                            .catch(err => console.log(err));
                         })
                         .catch(err => console.log(err));
                 })
@@ -363,37 +363,50 @@ function promptAddEmployee () {
 }
 
 // Create function with inquirer prompt to add a role
-function promptAddRole () {
+function promptAddRole() {
     queryDepartments((rows) => {
         rows.forEach((row) => {
             departmentNames.push(row.name);
         });
     });
     inquirer.prompt(newRoleQuestions)
-    .then((answers) => {
-        departmentIDLookup(answers.department_id)
-        .then((dept_id) => {
-            const newRole = {
-                title: answers.title,
-                department_id: dept_id,
-                salary: parseFloat(answers.salary)
-            };
-            addRole(newRole);
+        .then((answers) => {
+            departmentIDLookup(answers.department_id)
+                .then((dept_id) => {
+                    const newRole = {
+                        title: answers.title,
+                        department_id: dept_id,
+                        salary: parseFloat(answers.salary)
+                    };
+                    addRole(newRole);
+                })
+                .catch(err => console.log(err));
         })
-        .catch(err => console.log(err));
-    })
-    .catch((err) => {
-        if (err.isTtyError) {
-            console.log("Prompt could not be rendered in the current environment.");
-        } else {
-            console.log(err);
-        }
-    })
+        .catch((err) => {
+            if (err.isTtyError) {
+                console.log("Prompt could not be rendered in the current environment.");
+            } else {
+                console.log(err);
+            }
+        })
 }
 
 // Create function with inquirer prompt to add a department
+function promptAddDepartment() {
+    inquirer.prompt(newDeptQuestion)
+        .then((answer) => {
+            addDepartment(answer.dept);
+        })
+        .catch((err) => {
+            if (err.isTtyError) {
+                console.log("Prompt could not be rendered in the current environment.");
+            } else {
+                console.log(err);
+            }
+        })
+}
 
 // Create function with main menu inquirer prompt
 
 // Call main menu function
-promptAddRole();
+promptAddDepartment();
