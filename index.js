@@ -199,22 +199,14 @@ const newEmployeeQuestions = [{
     type: "list",
     name: "role_id",
     message: "Please select this employee's job title.",
-    choices: db.promise().query("SELECT title FROM roles;")
-        .then(([rows, fields]) => {
-            return rows;
-        })
-        .catch((err) => console.log(err)),
+    choices: roleTitles,
     pageSize: 10
 }, {
     type: "list",
     name: "manager_id",
     message: "Please select this employee's manager.",
-    when: (answers) => { return answers.role_id !== "President and Chief Executive Officer" },
-    choices: db.promise().query("SELECT CONCAT(employees.first_name, ' ', employees.last_name, ', ', roles.title) AS full_name FROM employees JOIN roles ON employees.role_id = roles.id;")
-        .then(([rows, fields]) => {
-            return rows;
-        })
-        .catch((err) => console.log(err)),
+    when: (answers) => {return answers.role_id !== "President and Chief Executive Officer"},
+    choices: employeeFullNames,
     pageSize: 10
 }];
 
@@ -325,6 +317,42 @@ function promptUpdateEmpRole() {
 }
 
 // Create function with inquirer prompt to add an employee
+function promptAddEmployee () {
+    db.promise().query("SELECT CONCAT(employees.first_name, ' ', employees.last_name, ', ', roles.title) AS full_name FROM employees JOIN roles ON employees.role_id = roles.id;")
+        .then(([rows, fields]) => {
+            rows.forEach((row) => employeeFullNames.push(row.full_name));
+            db.promise().query("SELECT title FROM roles;")
+                .then(([rows, fields]) => {
+                    rows.forEach(row => roleTitles.push(row.title));
+                    inquirer.prompt(newEmployeeQuestions)
+                        .then((answers) => {
+                            roleIDLookup(answers.role_id)
+                            .then((roleID) => {
+                                const manager = parseEmployee(answers.manager_id);
+                                roleIDLookup(manager[2])
+                                .then((mgrRole) => {
+                                    employeeIDLookup(manager[0], manager[1], mgrRole)
+                                    .then((mgrId) => {
+                                        const newEmployee = {
+                                            first_name: answers.first_name,
+                                            last_name: answers.last_name,
+                                            role_id: roleID,
+                                            manager_id: mgrId
+                                        };
+                                        addEmployee(newEmployee);
+                                    })
+                                    .catch(err => console.log(err));
+                                })
+                                .catch(err => console.log(err));
+                            })
+                            .catch(err => console.log(err));
+                        })
+                        .catch(err => console.log(err));
+                })
+                .catch((err) => console.log(err));
+        })
+        .catch((err) => console.log(err));
+}
 
 // Create function with inquirer prompt to add a role
 
@@ -333,4 +361,4 @@ function promptUpdateEmpRole() {
 // Create function with main menu inquirer prompt
 
 // Call main menu function
-promptUpdateEmpRole();
+promptAddEmployee();
