@@ -3,6 +3,11 @@ const inquirer = require("inquirer");
 const mysql = require("mysql2");
 const cTable = require("console.table");
 
+// Declare global variables
+let departmentNames = [];
+let roleTitles = [];
+let employeeFullNames = [];
+
 // Create connection to database with mysql2
 const db = mysql.createConnection({
     host: "localhost",
@@ -27,7 +32,7 @@ function showEmployees(employeesArr) {
 }
 
 // Create function with a query to select all departments
-async function queryDepartments(cb) {
+function queryDepartments(cb) {
     console.log("\n");
     db.promise().query("SELECT * FROM departments;")
         .then(([rows, fields]) => {
@@ -37,7 +42,7 @@ async function queryDepartments(cb) {
 }
 
 // Create function with a query to select all roles
-async function queryRoles(cb) {
+function queryRoles(cb) {
     console.log("\n");
     db.promise().query("SELECT roles.id, roles.title, departments.name, roles.salary FROM roles LEFT JOIN departments ON roles.department_id = departments.id;")
         .then(([rows, fields]) => {
@@ -47,7 +52,7 @@ async function queryRoles(cb) {
 }
 
 // Create function with a query to select all employees
-async function queryEmployees(cb) {
+function queryEmployees(cb) {
     console.log("\n");
     db.promise().query("SELECT employees.id AS ID, employees.first_name AS FirstName, employees.last_name AS LastName, roles.title AS Role, departments.name AS Department, roles.salary AS Salary, CONCAT(B.first_name, ' ', B.last_name) AS Manager FROM employees JOIN employees AS B ON employees.manager_id = B.id LEFT JOIN roles ON employees.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id;")
         .then(([rows, fields]) => {
@@ -57,7 +62,7 @@ async function queryEmployees(cb) {
 }
 
 // Create a function with a query to insert a department using a prepared statement
-async function addDepartment(dept) {
+function addDepartment(dept) {
     db.promise().execute(`INSERT INTO departments (name) VALUES (?);`, [dept])
         .then(() => {
             db.promise().query(`SELECT * FROM departments WHERE name = '${dept}';`)
@@ -71,7 +76,7 @@ async function addDepartment(dept) {
 }
 
 // Create a function with a query to insert a role using a prepared statement
-async function addRole(role) {
+function addRole(role) {
     db.promise().execute(`INSERT INTO roles (title, department_id, salary) VALUES (?, ?, ?);`, [role.title, role.department_id, role.salary])
         .then(() => {
             db.promise().query(`SELECT * FROM roles WHERE title = '${role.title}';`)
@@ -85,7 +90,7 @@ async function addRole(role) {
 }
 
 // Create a function with a query to insert an employee using a prepared statement
-async function addEmployee(employee) {
+function addEmployee(employee) {
     db.promise().execute(`INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?);`, [employee.first_name, employee.last_name, employee.role_id, employee.manager_id])
         .then(() => {
             db.promise().query(`SELECT employees.id AS ID, employees.first_name AS FirstName, employees.last_name AS LastName, roles.title AS Role, departments.name AS Department, roles.salary AS Salary, CONCAT(B.first_name, ' ', B.last_name) AS Manager FROM employees JOIN employees AS B ON employees.manager_id = B.id LEFT JOIN roles ON employees.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id WHERE employees.first_name = '${employee.first_name}' AND employees.last_name = '${employee.last_name}' AND employees.role_id = '${employee.role_id}';`)
@@ -99,8 +104,8 @@ async function addEmployee(employee) {
 }
 
 // Create function with a query to update an employee's role
-async function updateRole(empID, roleID, managerID) {
-    db.promise().query(`UPDATE employees SET role_id = ${roleID}, manager_id = ${managerID} WHERE id = ${empID}`)
+function updateRole(empID, roleID, managerID) {
+    db.promise().query(`UPDATE employees SET role_id = '${roleID}', manager_id = '${managerID}' WHERE id = '${empID}'`)
         .then(() => {
             db.promise().query(`SELECT employees.id, employees.first_name, employees.last_name, roles.title AS role, roles.salary AS salary, CONCAT(B.first_name, ' ', B.last_name) AS manager FROM employees JOIN employees AS B ON employees.manager_id = B.id LEFT JOIN roles ON employees.role_id = roles.id WHERE employees.id = ${empID}`)
                 .then(([rows, fields]) => {
@@ -205,7 +210,7 @@ const newEmployeeQuestions = [{
     name: "manager_id",
     message: "Please select this employee's manager.",
     when: (answers) => { return answers.role_id !== "President and Chief Executive Officer" },
-    choices: db.promise().query("SELECT CONCAT(employees.first_name, ' ', employees.last_name, ', ', roles.title) AS full_name FROM employees JOIN role ON employees.role_id = roles.id;")
+    choices: db.promise().query("SELECT CONCAT(employees.first_name, ' ', employees.last_name, ', ', roles.title) AS full_name FROM employees JOIN roles ON employees.role_id = roles.id;")
         .then(([rows, fields]) => {
             return rows;
         })
@@ -218,25 +223,106 @@ const updateEmpRoleQuestions = [{
     type: "list",
     name: "employee",
     message: "Please select an employee to update their role.",
-    choices: db.promise().query("SELECTCONCAT(employees.first_name, ' ', employees.last_name, ', ', roles.title) AS full_name FROM employees JOIN role ON employees.role_id = roles.id;")
-        .then(([rows, fields]) => {
-            return rows;
-        })
-        .catch((err) => console.log(err)),
+    choices: employeeFullNames,
     pageSize: 10
 }, {
     type: "list",
     name: "role",
     message: "Please select the employee's new job role.",
-    choices: db.promise().query("SELECT title FROM roles;")
-        .then(([rows, fields]) => {
-            return rows;
-        })
-        .catch((err) => console.log(err)),
+    choices: roleTitles,
+    pageSize: 10
+}, {
+    type: "list",
+    name: "manager",
+    message: "Please select the employee's new manager.",
+    choices: employeeFullNames,
     pageSize: 10
 }];
 
+// Create function to get role id from role title
+function roleIDLookup(title) {
+    return new Promise((resolve, reject) => {
+        db.query(`SELECT id FROM roles WHERE title = '${title}';`, (err, results, fields) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(results[0].id);
+            }
+        });
+    });
+}
+
+// Create function to get employee id from employee name and title
+function employeeIDLookup(first_name, last_name, role_id) {
+    return new Promise((resolve, reject) => {
+        db.query(`SELECT id FROM employees WHERE first_name = '${first_name}' AND last_name = '${last_name}' AND role_id = '${role_id}';`, (err, results, fields) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(results[0].id);
+            }
+        });
+    });
+}
+
+// Create function to parse first_name, last_name, and role from employee string
+function parseEmployee(empString) {
+    const commaArr = empString.split(", ");
+    const nameArr = commaArr[0].split(" ");
+    const titleArr = [];
+    for (let i = 1; i < commaArr.length; i++) {
+        titleArr.push(commaArr[i]);
+    }
+    const titleStr = titleArr.join(", ");
+    return [nameArr[0], nameArr[1], titleStr];
+}
+
 // Create function with inquirer prompt to update an employee's role
+function promptUpdateEmpRole() {
+    db.promise().query("SELECT CONCAT(employees.first_name, ' ', employees.last_name, ', ', roles.title) AS full_name FROM employees JOIN roles ON employees.role_id = roles.id;")
+        .then(([rows, fields]) => {
+            rows.forEach((row) => employeeFullNames.push(row.full_name));
+            db.promise().query("SELECT title FROM roles;")
+                .then(([rows, fields]) => {
+                    rows.forEach(row => roleTitles.push(row.title));
+                    inquirer.prompt(updateEmpRoleQuestions)
+                        .then((answers) => {
+                            const employee = parseEmployee(answers.employee);
+                            roleIDLookup(employee[2])
+                                .then((empRoleID) => {
+                                    employeeIDLookup(employee[0], employee[1], empRoleID)
+                                        .then((empID) => {
+                                            roleIDLookup(answers.role)
+                                                .then((roleID) => {
+                                                    const manager = parseEmployee(answers.manager);
+                                                    roleIDLookup(manager[2])
+                                                        .then((mgrRoleID) => {
+                                                            employeeIDLookup(manager[0], manager[1], mgrRoleID)
+                                                            .then((managerID) => {
+                                                                updateRole(empID, roleID, managerID);
+                                                            })
+                                                            .catch(err => console.log(err));
+                                                        })
+                                                        .catch((err) => console.log(err));
+                                                })
+                                                .catch(err => console.log(err));
+                                        })
+                                        .catch(err => console.log(err));
+                                })
+                                .catch(err => console.log(err));
+                        })
+                        .catch((err) => {
+                            if (err.isTtyError) {
+                                console.log("Prompt could not be rendered in the current environment.");
+                            } else {
+                                console.log(err);
+                            }
+                        });
+                })
+                .catch((err) => console.log(err));
+        })
+        .catch((err) => console.log(err));
+}
 
 // Create function with inquirer prompt to add an employee
 
@@ -247,3 +333,4 @@ const updateEmpRoleQuestions = [{
 // Create function with main menu inquirer prompt
 
 // Call main menu function
+promptUpdateEmpRole();
