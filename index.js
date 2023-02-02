@@ -19,16 +19,19 @@ const db = mysql.createConnection({
 // Create cTable function to display all departments
 function showDepartments(departmentsArr) {
     console.table("DEPARTMENTS", departmentsArr);
+    mainMenu();
 }
 
 // Create cTable function to display all roles
 function showRoles(rolesArr) {
     console.table("ROLES", rolesArr);
+    mainMenu();
 }
 
 // Create cTable function to display all employees
 function showEmployees(employeesArr) {
     console.table("EMPLOYEES", employeesArr);
+    mainMenu();
 }
 
 // Create function with a query to select all departments
@@ -69,6 +72,7 @@ function addDepartment(dept) {
                 .then(([rows, fields]) => {
                     console.log("Department successfully added.\n");
                     console.table(rows);
+                    mainMenu();
                 })
                 .catch((err) => console.log(err));
         })
@@ -83,6 +87,7 @@ function addRole(role) {
                 .then(([rows, fields]) => {
                     console.log("Role successfully added.\n");
                     console.table(rows);
+                    mainMenu();
                 })
                 .catch((err) => console.log(err));
         })
@@ -97,6 +102,7 @@ function addEmployee(employee) {
                 .then(([rows, fields]) => {
                     console.log("Employee successfully added.\n");
                     console.table(rows);
+                    mainMenu();
                 })
                 .catch((err) => console.log(err));
         })
@@ -111,6 +117,7 @@ function updateRole(empID, roleID, managerID) {
                 .then(([rows, fields]) => {
                     console.log("Role successfully updated.\n");
                     console.table(rows);
+                    mainMenu();
                 })
                 .catch((err) => console.log(err));
         })
@@ -403,10 +410,47 @@ function promptAddDepartment() {
             } else {
                 console.log(err);
             }
-        })
+        });
 }
 
 // Create function with main menu inquirer prompt
+function mainMenu() {
+    inquirer.prompt(mainQuestion)
+        .then((answer) => {
+            switch (answer.menu) {
+                case "View all departments":
+                    queryDepartments(showDepartments);
+                    break;
+                case "View all roles":
+                    queryRoles(showRoles);
+                    break;
+                case "View all employees":
+                    queryEmployees(showEmployees);
+                    break;
+                case "Add a department":
+                    promptAddDepartment();
+                    break;
+                case "Add a role":
+                    promptAddRole();
+                    break;
+                case "Add an employee":
+                    promptAddEmployee();
+                    break;
+                case "Update an employee role":
+                    promptUpdateEmpRole();
+                    break;
+                case "Exit":
+                    process.exit();
+            }
+        })
+        .catch((err) => {
+            if (err.isTtyError) {
+                console.log("Prompt could not be rendered in the current environment.");
+            } else {
+                console.log(err);
+            }
+        });
+}
 
 // Call main menu function
-promptAddDepartment();
+mainMenu();
