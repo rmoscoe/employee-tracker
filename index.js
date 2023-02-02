@@ -12,22 +12,22 @@ const db = mysql.createConnection({
 });
 
 // Create cTable function to display all departments
-function showDepartments (departmentsArr) {
+function showDepartments(departmentsArr) {
     console.table("DEPARTMENTS", departmentsArr);
 }
 
 // Create cTable function to display all roles
-function showRoles (rolesArr) {
+function showRoles(rolesArr) {
     console.table("ROLES", rolesArr);
 }
 
 // Create cTable function to display all employees
-function showEmployees (employeesArr) {
+function showEmployees(employeesArr) {
     console.table("EMPLOYEES", employeesArr);
 }
 
 // Create function with a query to select all departments
-async function queryDepartments (cb) {
+async function queryDepartments(cb) {
     console.log("\n");
     db.promise().query("SELECT * FROM departments;")
         .then(([rows, fields]) => {
@@ -37,7 +37,7 @@ async function queryDepartments (cb) {
 }
 
 // Create function with a query to select all roles
-async function queryRoles (cb) {
+async function queryRoles(cb) {
     console.log("\n");
     db.promise().query("SELECT roles.id, roles.title, departments.name, roles.salary FROM roles LEFT JOIN departments ON roles.department_id = departments.id;")
         .then(([rows, fields]) => {
@@ -47,7 +47,7 @@ async function queryRoles (cb) {
 }
 
 // Create function with a query to select all employees
-async function queryEmployees (cb) {
+async function queryEmployees(cb) {
     console.log("\n");
     db.promise().query("SELECT employees.id AS ID, employees.first_name AS FirstName, employees.last_name AS LastName, roles.title AS Role, departments.name AS Department, roles.salary AS Salary, CONCAT(B.first_name, ' ', B.last_name) AS Manager FROM employees JOIN employees AS B ON employees.manager_id = B.id LEFT JOIN roles ON employees.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id;")
         .then(([rows, fields]) => {
@@ -57,45 +57,45 @@ async function queryEmployees (cb) {
 }
 
 // Create a function with a query to insert a department using a prepared statement
-async function addDepartment (dept) {
+async function addDepartment(dept) {
     db.promise().execute(`INSERT INTO departments (name) VALUES (?);`, [dept])
-    .then(() => {
-        db.promise().query(`SELECT * FROM departments WHERE name = '${dept}';`)
-        .then(([rows, fields]) => {
-            console.log("Department successfully added.\n");
-            console.table(rows);
+        .then(() => {
+            db.promise().query(`SELECT * FROM departments WHERE name = '${dept}';`)
+                .then(([rows, fields]) => {
+                    console.log("Department successfully added.\n");
+                    console.table(rows);
+                })
+                .catch((err) => console.log(err));
         })
         .catch((err) => console.log(err));
-    })
-    .catch((err) => console.log(err));
 }
 
 // Create a function with a query to insert a role using a prepared statement
-async function addRole (role) {
+async function addRole(role) {
     db.promise().execute(`INSERT INTO roles (title, department_id, salary) VALUES (?, ?, ?);`, [role.title, role.department_id, role.salary])
-    .then(() => {
-        db.promise().query(`SELECT * FROM roles WHERE title = '${role.title}';`)
-        .then(([rows, fields]) => {
-            console.log("Role successfully added.\n");
-            console.table(rows);
+        .then(() => {
+            db.promise().query(`SELECT * FROM roles WHERE title = '${role.title}';`)
+                .then(([rows, fields]) => {
+                    console.log("Role successfully added.\n");
+                    console.table(rows);
+                })
+                .catch((err) => console.log(err));
         })
         .catch((err) => console.log(err));
-    })
-    .catch((err) => console.log(err));
 }
 
 // Create a function with a query to insert an employee using a prepared statement
-async function addEmployee (employee) {
+async function addEmployee(employee) {
     db.promise().execute(`INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?);`, [employee.first_name, employee.last_name, employee.role_id, employee.manager_id])
-    .then(() => {
-        db.promise().query(`SELECT employees.id AS ID, employees.first_name AS FirstName, employees.last_name AS LastName, roles.title AS Role, departments.name AS Department, roles.salary AS Salary, CONCAT(B.first_name, ' ', B.last_name) AS Manager FROM employees JOIN employees AS B ON employees.manager_id = B.id LEFT JOIN roles ON employees.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id WHERE employees.first_name = '${employee.first_name}' AND employees.last_name = '${employee.last_name}' AND employees.role_id = '${employee.role_id}';`)
-        .then(([rows, fields]) => {
-            console.log("Employee successfully added.\n");
-            console.table(rows);
+        .then(() => {
+            db.promise().query(`SELECT employees.id AS ID, employees.first_name AS FirstName, employees.last_name AS LastName, roles.title AS Role, departments.name AS Department, roles.salary AS Salary, CONCAT(B.first_name, ' ', B.last_name) AS Manager FROM employees JOIN employees AS B ON employees.manager_id = B.id LEFT JOIN roles ON employees.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id WHERE employees.first_name = '${employee.first_name}' AND employees.last_name = '${employee.last_name}' AND employees.role_id = '${employee.role_id}';`)
+                .then(([rows, fields]) => {
+                    console.log("Employee successfully added.\n");
+                    console.table(rows);
+                })
+                .catch((err) => console.log(err));
         })
         .catch((err) => console.log(err));
-    })
-    .catch((err) => console.log(err));
 }
 
 // Create function with a query to update an employee's role
@@ -111,17 +111,130 @@ async function updateRole(empID, roleID, managerID) {
         })
         .catch((err) => console.log(err));
 }
-updateRole(1001, 275, 1038);
 
 // Create array with an initial question object to select desired action
+const mainQuestion = [{
+    type: "list",
+    name: "menu",
+    message: "Please select an action to perform.",
+    choices: ["View all departments", "View all roles", "View all employees", "Add a department", "Add a role", "Add an employee", "Update an employee role", "Exit"],
+    when: (answers) => { return answers.menu !== "Exit" },
+    loop: true
+}];
 
 // Create array with single question for department name to add a department
+const newDeptQuestion = [{
+    name: "dept",
+    message: "Please enter the name of the new department.",
+    validate: (answers) => {
+        if (/^[A-Za-z0-9]+[A-Za-z0-9\-_\s\,\.\(\)]*$/.test(answers.dept)) {
+            return true;
+        } else {
+            return "Department name requires at least one valid character (letters, numbers, spaces, '-_,.()' and must start with a letter or number."
+        }
+    }
+}];
 
 // Create array with questions for name, salary, and department to add a role
+const newRoleQuestions = [{
+    name: "title",
+    message: "Please enter the name of the new job role.",
+    validate: (answers) => {
+        if (/^[A-Za-z0-9]+[A-Za-z0-9\-_\s\,\.\(\)]*$/.test(answers.title)) {
+            return true;
+        } else {
+            return "Job title requires at least one valid character (letters, numbers, spaces, '-_,.()' and must start with a letter or number."
+        }
+    }
+}, {
+    type: "number",
+    name: "salary",
+    message: "Please enter the salary for this role using only numerals and the decimal point. For example, enter $50,000.00 as 50000 or 50000.00.",
+    validate: (answers) => {
+        if (answers.salary > 0 && answers.salary <= 2000000) {
+            return true;
+        } else {
+            return "Please enter a number between 0 and 2,000,000.";
+        }
+    }
+}, {
+    type: "list",
+    name: "department_id",
+    message: "Please select the department to which this role is assigned.",
+    choices: db.promise().query("SELECT name FROM departments;")
+        .then(([rows, fields]) => {
+            return rows;
+        })
+        .catch((err) => console.log(err)),
+    pageSize: 10
+}];
 
 // Create array with questions for first name, last name, role, and manager to add an employee
+const newEmployeeQuestions = [{
+    name: "first_name",
+    message: "Please enter the employee's first name.",
+    validate: (answers) => {
+        if (/^[A-Za-z]+[a-z\-]*$/.test(answers.first_name)) {
+            return true;
+        } else {
+            return "Please use only letters and hyphens (-).";
+        }
+    }
+}, {
+    name: "last_name",
+    message: "Please enter the employee's last name.",
+    validate: (answers) => {
+        if (/^[A-Za-z]+[A-Za-z\-]*$/.test(answers.last_name)) {
+            return true;
+        } else {
+            return "Please use only letters and hyphens (-).";
+        }
+    }
+}, {
+    type: "list",
+    name: "role_id",
+    message: "Please select this employee's job title.",
+    choices: db.promise().query("SELECT title FROM roles;")
+        .then(([rows, fields]) => {
+            return rows;
+        })
+        .catch((err) => console.log(err)),
+    pageSize: 10
+}, {
+    type: "list",
+    name: "manager_id",
+    message: "Please select this employee's manager.",
+    when: (answers) => { return answers.role_id !== "President and Chief Executive Officer" },
+    choices: db.promise().query("SELECT CONCAT(employees.first_name, ' ', employees.last_name, ', ', roles.title) AS full_name FROM employees JOIN role ON employees.role_id = roles.id;")
+        .then(([rows, fields]) => {
+            return rows;
+        })
+        .catch((err) => console.log(err)),
+    pageSize: 10
+}];
 
 // Create array with questions for employee and new role to update an employee's role
+const updateEmpRoleQuestions = [{
+    type: "list",
+    name: "employee",
+    message: "Please select an employee to update their role.",
+    choices: db.promise().query("SELECTCONCAT(employees.first_name, ' ', employees.last_name, ', ', roles.title) AS full_name FROM employees JOIN role ON employees.role_id = roles.id;")
+        .then(([rows, fields]) => {
+            return rows;
+        })
+        .catch((err) => console.log(err)),
+    pageSize: 10
+}, {
+    type: "list",
+    name: "role",
+    message: "Please select the employee's new job role.",
+    choices: db.promise().query("SELECT title FROM roles;")
+        .then(([rows, fields]) => {
+            return rows;
+        })
+        .catch((err) => console.log(err)),
+    pageSize: 10
+}];
 
 // Create function with inquirer prompt to update an employee's role
 
