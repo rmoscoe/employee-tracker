@@ -152,11 +152,10 @@ const newRoleQuestions = [{
         }
     }
 }, {
-    type: "number",
     name: "salary",
     message: "Please enter the salary for this role using only numerals and the decimal point. For example, enter $50,000.00 as 50000 or 50000.00.",
-    validate: (answers) => {
-        if (answers.salary > 0 && answers.salary <= 2000000) {
+    validate: (answer) => {
+        if ((/^[0-9]+$/.test(answer) || /^[0-9]+.[0-9]{2}$/.test(answer)) && answer >= 0 && answer <= 2000000) {
             return true;
         } else {
             return "Please enter a number between 0 and 2,000,000.";
@@ -166,11 +165,7 @@ const newRoleQuestions = [{
     type: "list",
     name: "department_id",
     message: "Please select the department to which this role is assigned.",
-    choices: db.promise().query("SELECT name FROM departments;")
-        .then(([rows, fields]) => {
-            return rows;
-        })
-        .catch((err) => console.log(err)),
+    choices: departmentNames,
     pageSize: 10
 }];
 
@@ -230,6 +225,19 @@ const updateEmpRoleQuestions = [{
     choices: employeeFullNames,
     pageSize: 10
 }];
+
+// Create function to get department id from department name
+function departmentIDLookup(dept) {
+    return new Promise((resolve, reject) => {
+        db.query(`SELECT id FROM departments WHERE name = '${dept}';`, (err, results, fields) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(results[0].id);
+            }
+        });
+    });
+}
 
 // Create function to get role id from role title
 function roleIDLookup(title) {
@@ -355,10 +363,37 @@ function promptAddEmployee () {
 }
 
 // Create function with inquirer prompt to add a role
+function promptAddRole () {
+    queryDepartments((rows) => {
+        rows.forEach((row) => {
+            departmentNames.push(row.name);
+        });
+    });
+    inquirer.prompt(newRoleQuestions)
+    .then((answers) => {
+        departmentIDLookup(answers.department_id)
+        .then((dept_id) => {
+            const newRole = {
+                title: answers.title,
+                department_id: dept_id,
+                salary: parseFloat(answers.salary)
+            };
+            addRole(newRole);
+        })
+        .catch(err => console.log(err));
+    })
+    .catch((err) => {
+        if (err.isTtyError) {
+            console.log("Prompt could not be rendered in the current environment.");
+        } else {
+            console.log(err);
+        }
+    })
+}
 
 // Create function with inquirer prompt to add a department
 
 // Create function with main menu inquirer prompt
 
 // Call main menu function
-promptAddEmployee();
+promptAddRole();
