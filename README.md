@@ -56,6 +56,7 @@ This project provides a command line application to interact with a MySQL databa
 <br/>
 
 ### Usage
+[Walkthrough Video](https://drive.google.com/file/d/1Gm278AQvauy9FiAlEyKEf22vmOyIWjy3/view?usp=sharing)
 
 In your terminal, run the command ```node index.js``` to launch the application. Using the arrow keys, select a desired action from the Main Menu (see below).
 
