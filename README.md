@@ -23,11 +23,16 @@ This project provides a command line application to interact with a MySQL databa
 
 ## Table of Contents
 
-* [Installation and Usage](#installation-and-usage)
-* [Learning Points](#learning-points)
-* [Author Info](#author-info)
-* [Credits](#credits)
-* [License](#license)
+- [Technology Used](#technology-used)
+- [Description](#description)
+- [Table of Contents](#table-of-contents)
+- [Installation and Usage](#installation-and-usage)
+  - [Installation](#installation)
+  - [Usage](#usage)
+- [Learning Points](#learning-points)
+- [Author Info](#author-info)
+  - [Ryan Moscoe](#ryan-moscoe)
+- [License](#license)
 
 <br/>
 
@@ -90,7 +95,7 @@ I learned a number of tools and skills by completing this project:
 
 ### Ryan Moscoe 
 
-* [Portfolio](https://rmoscoe.github.io/portfolio/)
+* [Portfolio](https://rmoscoe.github.io/my-portfolio/)
 * [LinkedIn](https://www.linkedin.com/in/ryan-moscoe-8652973/)
 * [Github](https://github.com/rmoscoe)
 
